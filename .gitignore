@@ -1,0 +1,18 @@
+# ---- Virtual environment directories ----
+/etc/
+/Include/
+/Lib/
+/Scripts/
+/share/
+
+# ---- Python cache and bytecode ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ---- v2-specific ignores ----
+/v2/image_cache/
+/v2/__pycache__/
+/v2/listings_cache.json
+/v2/scraper_settings.json
