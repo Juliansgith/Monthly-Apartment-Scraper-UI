@@ -1,6 +1,8 @@
 import logging
 from functools import partial
 import webbrowser
+import csv 
+import json 
 
 from PyQt5.QtCore import Qt, pyqtSlot, QModelIndex, QPoint
 from PyQt5.QtGui  import QPixmap, QColor
@@ -8,7 +10,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QMessageBox, QPushButton, QHBoxLayout, QSpinBox,
     QFileDialog, QSplitter, QScrollArea, QGroupBox, QFormLayout,
     QSizePolicy, QCheckBox, QComboBox, QTabWidget, QToolButton, QMenu, QListView,
-    QAction
+    QAction, QApplication 
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
@@ -25,12 +27,13 @@ class MainWindow(QWidget):
         self.setWindowTitle("Monthly Mansion Scraper Deluxe")
         self.resize(1200, 800)
 
+
         self.settings_manager = SettingsManager()
         self.data_manager = DataManager()
 
         self.currently_displayed_listing = None
         self.current_photo_index = 0
-        self.mainPhotoLabel = None
+        self.mainPhotoLabel = None 
         self.photoNavWidget = None
         self.photosThumbScrollArea = None
         self.prevPhotoBtn = None
@@ -40,12 +43,15 @@ class MainWindow(QWidget):
         self.original_splitter_sizes = None 
 
         self._setup_ui()
-        self.map_manager = MapManager(self.mapView)
-        self.map_manager.connect_show_details_signal(self.display_listing_details_by_link)
+
+        self.map_manager = MapManager(self.mapView) 
+        self.map_manager.connect_show_details_signal(self.display_listing_details_by_link) 
 
         self.scraper = Scraper()
+
         self._connect_signals()
-        self._update_models_and_stats()
+
+        self._update_models_and_stats() 
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -84,7 +90,7 @@ class MainWindow(QWidget):
         self.favListView.setModel(self.favModel); self.favListView.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.mapViewWidget = QWidget()
-        map_widget_layout = QVBoxLayout(self.mapViewWidget) 
+        map_widget_layout = QVBoxLayout(self.mapViewWidget)
         
         map_controls_layout = QHBoxLayout() 
         self.refreshMapBtn = QPushButton("Show/Refresh Filtered on Map")
@@ -169,7 +175,7 @@ class MainWindow(QWidget):
         self.starBtn.clicked.connect(self.toggle_favourite)
         self.clearListingsCacheBtn.clicked.connect(self._ui_clear_listings_cache)
         self.clearAppSettingsBtn.clicked.connect(self._ui_clear_app_settings)
-        self.refreshAllDetailsBtn.clicked.connect(self._ui_refresh_all_details) # Connect new button
+        self.refreshAllDetailsBtn.clicked.connect(self._ui_refresh_all_details)
         self.exportFilteredCsvAction.triggered.connect(lambda: self.export_data('csv', 'filtered'))
         self.exportFilteredJsonAction.triggered.connect(lambda: self.export_data('json', 'filtered'))
         self.exportFavCsvAction.triggered.connect(lambda: self.export_data('csv', 'favourites'))
@@ -178,50 +184,41 @@ class MainWindow(QWidget):
         self.exportSelectedJsonAction.triggered.connect(lambda: self.export_data('json', 'selected'))
         self.refreshMapBtn.clicked.connect(self._render_map_view_action)
         self.toggleMaximizeMapBtn.clicked.connect(self._toggle_maximize_map)
-        self.main_tabs.currentChanged.connect(self._on_main_tab_changed) 
+        self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
     def _on_main_tab_changed(self, index):
-        """Enable/disable map maximize button based on current tab."""
         is_map_tab_current = (self.main_tabs.widget(index) == self.mapViewWidget)
         self.toggleMaximizeMapBtn.setEnabled(is_map_tab_current)
         if not is_map_tab_current and self.map_maximized:
-            self._toggle_maximize_map() # restore fucntion
+            self._toggle_maximize_map()
 
     def _toggle_maximize_map(self):
-        if not self.map_maximized: 
-            self.widgets_to_hide_for_map = [self.filters_gb, self.stats_gb, self.maint_gb]
-            for i in range(self.left_pane_widget.layout().count()):
-                item = self.left_pane_widget.layout().itemAt(i)
-                widget = item.widget()
-                if widget and widget != self.main_tabs: 
-                    widget.setVisible(False)
-            
-            
+        if not self.map_maximized:
+            self.widgets_to_hide_for_map = [self.filters_gb, self.stats_gb, self.maint_gb] 
+            for w in self.widgets_to_hide_for_map:
+                w.setVisible(False)
+
             for i in range(self.main_tabs.count()):
                 if self.main_tabs.widget(i) != self.mapViewWidget:
-                    self.main_tabs.setTabVisible(i, False)
-            
-            self.main_tabs.setCurrentWidget(self.mapViewWidget) 
+                    self.main_tabs.setTabVisible(i, False) 
 
-            if self.original_splitter_sizes is None:
-                 self.original_splitter_sizes = self.top_splitter.sizes()
+            self.main_tabs.setCurrentWidget(self.mapViewWidget)
 
-            self.top_splitter.setSizes([1, 999]) 
+            if self.original_splitter_sizes is None: self.original_splitter_sizes = self.top_splitter.sizes()
+            self.top_splitter.setSizes([1, 999])
             self.toggleMaximizeMapBtn.setText("Restore View")
             self.map_maximized = True
             logging.debug("Map Maximized")
-        else: 
-            for i in range(self.left_pane_widget.layout().count()):
-                item = self.left_pane_widget.layout().itemAt(i)
-                widget = item.widget()
-                if widget and widget != self.main_tabs:
-                    widget.setVisible(True)
-            for i in range(self.main_tabs.count()):
+        else:
+            if hasattr(self, 'widgets_to_hide_for_map'):
+                for w in self.widgets_to_hide_for_map:
+                     w.setVisible(True)
+
+            for i in range(self.main_tabs.count()): 
                  self.main_tabs.setTabVisible(i, True)
-            if self.original_splitter_sizes:
-                self.top_splitter.setSizes(self.original_splitter_sizes)
-            else: # fallback
-                self.top_splitter.setSizes([450,750])
+
+            if self.original_splitter_sizes: self.top_splitter.setSizes(self.original_splitter_sizes)
+            else: self.top_splitter.setSizes([450,750])
             self.toggleMaximizeMapBtn.setText("Maximize Map")
             self.map_maximized = False
             logging.debug("Map Restored")
@@ -301,7 +298,7 @@ class MainWindow(QWidget):
             listing = self.data_manager.get_listing_by_link(link)
             if listing: self.starBtn.setText("⭐" if listing.is_fav else "✩")
 
-    @pyqtSlot(QPoint)
+    @pyqtSlot(QPoint) 
     def show_list_context_menu(self, point):
         sender_list_view = self.sender()
         if not isinstance(sender_list_view, QListView): return
@@ -353,7 +350,7 @@ class MainWindow(QWidget):
         if num_listings == 0: QMessageBox.information(self, "Refresh All", "No listings to refresh."); return
         reply = QMessageBox.question(self, "Confirm Refresh All", f"Refresh details for all {num_listings} listings?\n(May take time & network resources)", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            self.statusLabel.setText(f"Queueing {num_listings} for detail refresh..."); QApplication.processEvents()
+            self.statusLabel.setText(f"Queueing {num_listings} for detail refresh..."); QApplication.processEvents() # Use QApplication here
             self.data_manager.trigger_refresh_all_details()
             self.statusLabel.setText(f"Queued {num_listings} listings. Check logs/status.")
 
@@ -481,6 +478,7 @@ class MainWindow(QWidget):
         return selected_listings
 
     def export_data(self, file_format, export_type):
+        import csv, json
         listings_to_export = []; default_filename = "listings"
         if export_type == 'filtered': listings_to_export = self.resultsModel.listings_ref; default_filename = "filtered_listings"
         elif export_type == 'favourites': listings_to_export = self.favModel.listings_ref; default_filename = "favourite_listings"
