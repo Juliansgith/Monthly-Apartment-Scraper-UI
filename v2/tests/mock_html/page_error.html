@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="EUC-JP">
+    <title>Test Error Page</title>
+</head>
+<body>
+    <div class="listArea">
+        <!-- Listing 1 (Valid, to ensure scraper continues) -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/3001">Good Apartment Before Error</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Valid Address 1</td></tr>
+                    <tr><th>最寄り駅</th><td>Valid Station 1 / Valid Line 1 / 5 min walk</td></tr>
+                    <tr><th>面積</th><td>25m²</td></tr>
+                    <tr><th>間取</th><td>1K</td></tr>
+                    <tr><th>築年月</th><td>2020年</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="m">
+                        <td>85,000円/月</td>
+                        <td>5,000円</td>
+                        <td>10,000円</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Listing 2 (Error: Missing rent table) -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/3002">Apartment Missing Rent</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Error Address 2</td></tr>
+                    <tr><th>最寄り駅</th><td>Error Station 2 / Error Line 2 / 10 min walk</td></tr>
+                    <tr><th>面積</th><td>30m²</td></tr>
+                    <tr><th>間取</th><td>1DK</td></tr>
+                    <tr><th>築年月</th><td>2018年</td></tr>
+                </table>
+            </div>
+            <!-- Rent table is missing -->
+        </div>
+
+        <!-- Listing 3 (Error: Unparseable area) -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/3003">Apartment Bad Area</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Error Address 3</td></tr>
+                    <tr><th>最寄り駅</th><td>Error Station 3 / Error Line 3 / 2 min walk</td></tr>
+                    <tr><th>面積</th><td>Twenty Sq Meters</td> <!-- Unparseable -->
+                    <tr><th>間取</th><td>1R</td></tr>
+                    <tr><th>築年月</th><td>2021年</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="m">
+                        <td>70,000円/月</td>
+                        <td>3,000円</td>
+                        <td>7,000円</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Listing 4 (Error: Missing title link href) -->
+        <div class="box">
+            <h2 class="th02"><a>Apartment Missing Link Href</a></h2> <!-- Missing href -->
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Error Address 4</td></tr>
+                    <tr><th>最寄り駅</th><td>Error Station 4 / Error Line 4 / 12 min walk</td></tr>
+                    <tr><th>面積</th><td>22m²</td></tr>
+                    <tr><th>間取</th><td>1K</td></tr>
+                    <tr><th>築年月</th><td>2017年</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="m">
+                        <td>60,000円/月</td>
+                        <td>2,000円</td>
+                        <td>6,000円</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Listing 5 (Valid, to ensure scraper continues after errors) -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/3004">Good Apartment After Error</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Valid Address 5</td></tr>
+                    <tr><th>最寄り駅</th><td>Valid Station 5 / Valid Line 5 / 7 min walk</td></tr>
+                    <tr><th>面積</th><td>28m²</td></tr>
+                    <tr><th>間取</th><td>1LDK</td></tr>
+                    <tr><th>築年月</th><td>2019年</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="m">
+                        <td>95,000円/月</td>
+                        <td>6,000円</td>
+                        <td>12,000円</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
