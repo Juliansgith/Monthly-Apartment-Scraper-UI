@@ -102,7 +102,7 @@ class Scraper(QObject):
                     logging.error(f"Request exception: {req_err} for {url}")
                     retries += 1
                     if retries > MAX_SCRAPER_RETRIES:
-                        self.error.emit(f"Max retries exceeded for {url}. Error: {req_err}")
+                        self.error.emit(f"Max retries exceeded for {url}. Error: {type(req_err).__name__}: {req_err}")
                         break
                     logging.warning(f"Retrying ({retries}/{MAX_SCRAPER_RETRIES}) in {current_backoff_time}s...")
                     self.progress.emit(f"Network issue. Retrying page {page} in {current_backoff_time}s...")
@@ -111,9 +111,8 @@ class Scraper(QObject):
                     current_backoff_time = min(current_backoff_time * 2, MAX_BACKOFF_TIME)
                     continue
 
-
-                resp.encoding = 'EUC-JP'
-                soup = BeautifulSoup(resp.text, 'html.parser')
+                # Use resp.content and let BeautifulSoup handle decoding
+                soup = BeautifulSoup(resp.content, 'html.parser', from_encoding='EUC-JP')
                 boxes = soup.select('.listArea .box')
 
                 if not boxes:
@@ -144,36 +143,59 @@ class Scraper(QObject):
                             logging.debug(f"Skipping known listing (delta mode): {link}")
                             continue # skip processing further
 
-
                         detail_table_el = box.select_one('.detail table')
                         if not detail_table_el:
                             logging.warning(f"[p{page}][#{idx}] Detail table not found for '{title}'. Skipping.")
                             continue
 
-                        data  = {}
+                        # Initialize with defaults for critical fields
+                        data = {} # Still populate for less critical or unexpected fields
+                        addr_val = ''
+                        stations_val = ''
+                        area_str_val = '0' # Keep as string initially
+                        layout_val = 'N/A'
+                        build_val = ''
+                        pay_method_val = ''
+
                         for tr_detail in detail_table_el.find_all('tr'):
-                            th_tag, td_tag = tr_detail.find('th'), tr_detail.find('td')
+                            th_tag = tr_detail.find('th')
+                            td_tag = tr_detail.find('td')
                             if th_tag and td_tag:
                                 k = th_tag.get_text(strip=True)
                                 v = td_tag.get_text(" / ", strip=True)
-                                data[k] = v
+                                data[k] = v # Populate data dict for general access
 
-                        addr     = data.get('住所','')
-                        stations = data.get('最寄り駅','')
-                        area_s   = data.get('面積','0').replace('m²','').strip().rstrip('〜')
+                                # Direct assignment for critical known fields
+                                if k == '住所':
+                                    addr_val = v
+                                elif k == '最寄り駅':
+                                    stations_val = v
+                                elif k == '面積':
+                                    area_str_val = v
+                                elif k in ['間取', '間取り', 'タイプ']:
+                                    layout_val = v
+                                elif k == '築年月':
+                                    build_val = v
+                                elif 'お支払い方法' in k:
+                                    pay_method_val = v
+                        
+                        # Process directly extracted critical values
+                        area_s = area_str_val.replace('m²','').strip().rstrip('〜')
                         try:
                             area = float(area_s) if area_s else 0.0
                         except ValueError:
                             logging.warning(f"[p{page}][#{idx}] Bad area value '{area_s}' for '{title}'. Skipping.")
                             continue
-                        if area == 0:
-                            logging.warning(f"[p{page}][#{idx}] Area is 0 for '{title}'. Skipping.")
+                        if area == 0.0 and area_str_val != '0': # Only skip if truly zero and not default
+                            logging.warning(f"[p{page}][#{idx}] Area is 0 for '{title}' (original: '{area_str_val}'). Skipping.")
                             continue
-
-                        layout = data.get('間取') or data.get('間取り') or data.get('タイプ') or 'N/A'
-                        build  = data.get('築年月','')
-                        pay_method_key = next((k_pm for k_pm in data if 'お支払い方法' in k_pm), None)
-                        pay_method = data.get(pay_method_key, '') if pay_method_key else ''
+                        
+                        # Use directly assigned values
+                        addr = addr_val
+                        stations = stations_val
+                        layout = layout_val
+                        build = build_val
+                        pay_method = pay_method_val
 
                         rent_tbl = box.select_one('.rent table')
                         if not rent_tbl:
@@ -185,9 +207,9 @@ class Scraper(QObject):
                         row_generic = None
                         if not (row_m or row_s):
                              candidate_rows = rent_tbl.select('tr')
-                             if len(candidate_rows) > 1 and candidate_rows[1].find('th'):
-                                row_generic = candidate_rows[1]
-
+                             # Check if the first row looks like a header-value pair for rent
+                             if candidate_rows and candidate_rows[0].find('th'):
+                                row_generic = candidate_rows[0]
 
                         target_row = row_m or row_s or row_generic
                         if not target_row:

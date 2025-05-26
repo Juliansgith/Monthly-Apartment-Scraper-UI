@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="EUC-JP">
+    <title>Test Listings</title>
+</head>
+<body>
+    <div class="listArea">
+        <!-- Listing 1 -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/1001">Test Apartment 1</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Test Address 1</td></tr>
+                    <tr><th>最寄り駅</th><td>Test Station 1 / Test Line 1 / 5 min walk</td></tr>
+                    <tr><th>面積</th><td>25m²</td></tr>
+                    <tr><th>間取</th><td>1K</td></tr>
+                    <tr><th>築年月</th><td>2020年</td></tr>
+                    <tr><th>お支払い方法</th><td>Credit Card</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="m"> <!-- Monthly rent row -->
+                        <td>80,000円/月</td>
+                        <td>5,000円</td> <!-- Utilities -->
+                        <td>10,000円</td> <!-- Cleaning -->
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Listing 2 -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/1002">Test Apartment 2</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Test Address 2</td></tr>
+                    <tr><th>最寄り駅</th><td>Test Station 2 / Test Line 2 / 10 min walk</td></tr>
+                    <tr><th>面積</th><td>30.5m²</td></tr>
+                    <tr><th>間取り</th><td>1DK</td></tr> <!-- Different key for layout -->
+                    <tr><th>築年月</th><td>2018年3月</td></tr>
+                    <tr><th>お支払い方法</th><td>Bank Transfer</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                    <tr class="s"> <!-- Short-term rent row, should still be parsed -->
+                        <td>90,000円/月</td>
+                        <td>Included</td>
+                        <td>15,000円</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Listing 3 (Minimal, to test fallback rent parsing) -->
+        <div class="box">
+            <h2 class="th02"><a href="/tokyo/rent/1003">Test Apartment 3 Minimal</a></h2>
+            <div class="detail">
+                <table>
+                    <tr><th>住所</th><td>Test Address 3</td></tr>
+                    <tr><th>最寄り駅</th><td>Test Station 3 / Test Line 3 / 1 min walk</td></tr>
+                    <tr><th>面積</th><td>19.0m²</td></tr>
+                    <tr><th>タイプ</th><td>1R</td></tr> <!-- Yet another key for layout -->
+                    <tr><th>築年月</th><td>2022年1月</td></tr>
+                </table>
+            </div>
+            <div class="rent">
+                <table>
+                     <tr> <!-- Generic row, first td should be rent -->
+                         <th>賃料</th>
+                         <td>75000円</td> <!-- No /月, testing fallback -->
+                     </tr>
+                     <tr>
+                         <td>管理費等</td>
+                         <td>3000円</td>
+                     </tr>
+                     <tr>
+                         <td>敷金/礼金</td>
+                         <td>不要/不要</td>
+                     </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
